@@ -1,10 +1,11 @@
 {
-  "name": null,
+  "project": null,
+  "fixed_model_name": null,
   "pipeline": [],
   "language": "en",
   "num_threads": 1,
   "max_training_processes": 1,
-  "path": "models",
+  "path": "projects",
   "response_log": "logs",
   "config": "config.json",
   "log_level": "INFO",
@@ -19,6 +20,7 @@
   "aws_endpoint_url": null,
   "max_number_of_ngrams": 7,
   "duckling_dimensions": null,
+  "duckling_http_url": null,
 
   "ner_crf": {
     "BILOU_flag": true,

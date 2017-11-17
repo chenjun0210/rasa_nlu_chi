@@ -5,7 +5,7 @@ Using rasa NLU as a HTTP server
 
 .. note:: Before you can use the server, you need to train a model! See :ref:`training_your_model`
 
-The HTTP api exists to make it easy for non-python projects to use rasa NLU, and to make it trivial for projects currently using {wit,LUIS,api}.ai to try it out.
+The HTTP api exists to make it easy for non-python projects to use rasa NLU, and to make it trivial for projects currently using wit/LUIS/Dialogflow to try it out.
 
 Running the server
 ------------------
@@ -66,13 +66,13 @@ By default the latest trained model for the project will be loaded. You can also
 You can post your training data to this endpoint to train a new model for a project.
 This request will wait for the server answer: either the model was trained successfully or the training errored.
 Using the HTTP server, you must specify the project you want to train a new model for to be able to use it during parse requests later on :
-``/train?name=my_project``. Any parameter passed with the query string will be treated as a
+``/train?project=my_project``. Any parameter passed with the query string will be treated as a
 configuration parameter of the model, hence you can change all the configuration values listed in the
 configuration section by passing in their name and the adjusted value.
 
 .. code-block:: bash
 
-    $ curl -XPOST localhost:5000/train?name=my_project -d @data/examples/rasa/demo-rasa.json
+    $ curl -XPOST localhost:5000/train?project=my_project -d @data/examples/rasa/demo-rasa.json
 
 You cannot send a training request for a project already training a new model (see below).
 

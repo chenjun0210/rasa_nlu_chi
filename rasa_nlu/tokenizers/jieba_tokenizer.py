@@ -14,8 +14,16 @@ from rasa_nlu.components import Component
 from rasa_nlu.training_data import Message
 from rasa_nlu.training_data import TrainingData
 
+import glob
+import jieba
+# Add jieba userdict file
+jieba_userdicts = glob.glob("./jieba_userdict/*")
+for jieba_userdict in jieba_userdicts:
+    jieba.load_userdict(jieba_userdict)
+
 
 class JiebaTokenizer(Tokenizer, Component):
+    
     
     name = "tokenizer_jieba"
 
@@ -23,7 +31,8 @@ class JiebaTokenizer(Tokenizer, Component):
     
     def __init__(self):
         pass
-    
+       
+
     @classmethod
     def required_packages(cls):
         # type: () -> List[Text]
@@ -33,6 +42,7 @@ class JiebaTokenizer(Tokenizer, Component):
         # type: (TrainingData, RasaNLUConfig, **Any) -> None
         if config['language'] != 'zh':
             raise Exception("tokenizer_jieba is only used for Chinese. Check your configure json file.")
+            
         for example in training_data.training_examples:
             example.set("tokens", self.tokenize(example.text))
 
@@ -43,9 +53,8 @@ class JiebaTokenizer(Tokenizer, Component):
 
     def tokenize(self, text):
         # type: (Text) -> List[Token]
-        import jieba
-
         tokenized = jieba.tokenize(text)
         tokens = [Token(word, start) for (word, start, end) in tokenized]
+
         return tokens
 

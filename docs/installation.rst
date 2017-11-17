@@ -3,7 +3,7 @@
 Installation
 ============
 
-rasa NLU itself doesn't have any external requirements, but to do something useful with it you need to
+Rasa NLU itself doesn't have any external requirements, but to do something useful with it you need to
 install & configure a backend. Which backend you want to use is up to you.
 
 Setting up rasa NLU
@@ -36,7 +36,7 @@ installed and tell you which are missing, if any.
 
     .. code-block:: bash
 
-        pip install -r dev-requirements.txt
+        pip install -r alt_requirements/requirements_full.txt
 
     to install all requirements.
 

@@ -4,17 +4,18 @@ from __future__ import division
 from __future__ import absolute_import
 from builtins import object
 import io
-import json
+import simplejson
 import os
 import six
 
-# Describes where to search for the configuration file if the location is not set by the user
+# Describes where to search for the config file if no location is specified
 from typing import Text
 
 DEFAULT_CONFIG_LOCATION = "config.json"
 
 DEFAULT_CONFIG = {
-    "name": None,
+    "project": None,
+    "fixed_model_name": None,
     "config": DEFAULT_CONFIG_LOCATION,
     "data": None,
     "emulate": None,
@@ -25,7 +26,7 @@ DEFAULT_CONFIG = {
     "spacy_model_name": None,
     "num_threads": 1,
     "max_training_processes": 1,
-    "path": "models",
+    "path": "projects",
     "port": 5000,
     "token": None,
     "cors_origins": [],
@@ -34,6 +35,7 @@ DEFAULT_CONFIG = {
     "response_log": "logs",
     "aws_endpoint_url": None,
     "duckling_dimensions": None,
+    "duckling_http_url": None,
     "ner_crf": {
         "BILOU_flag": True,
         "features": [
@@ -60,6 +62,8 @@ class InvalidConfigError(ValueError):
 
 
 class RasaNLUConfig(object):
+    DEFAULT_PROJECT_NAME = "default"
+
     def __init__(self, filename=None, env_vars=None, cmdline_args=None):
 
         if filename is None and os.path.isfile(DEFAULT_CONFIG_LOCATION):
@@ -69,7 +73,7 @@ class RasaNLUConfig(object):
         if filename is not None:
             try:
                 with io.open(filename, encoding='utf-8') as f:
-                    file_config = json.loads(f.read())
+                    file_config = simplejson.loads(f.read())
             except ValueError as e:
                 raise InvalidConfigError("Failed to read configuration file '{}'. Error: {}".format(filename, e))
             self.override(file_config)
@@ -126,7 +130,7 @@ class RasaNLUConfig(object):
         return dict(list(self.items()))
 
     def view(self):
-        return json.dumps(self.__dict__, indent=4)
+        return simplejson.dumps(self.__dict__, indent=4)
 
     def split_arg(self, config, arg_name):
         if arg_name in config and isinstance(config[arg_name], six.string_types):
@@ -141,13 +145,15 @@ class RasaNLUConfig(object):
         return config
 
     def create_cmdline_config(self, cmdline_args):
-        cmdline_config = {k: v for k, v in list(cmdline_args.items()) if v is not None}
+        cmdline_config = {k: v
+                          for k, v in list(cmdline_args.items())
+                          if v is not None}
         cmdline_config = self.split_pipeline(cmdline_config)
         cmdline_config = self.split_arg(cmdline_config, "duckling_dimensions")
         return cmdline_config
 
     def create_env_config(self, env_vars):
-        keys = [key for key in env_vars.keys() if "RASA" in key]
+        keys = [key for key in env_vars.keys() if "RASA_" in key]
         env_config = {key.split('RASA_')[1].lower(): env_vars[key] for key in keys}
         env_config = self.split_pipeline(env_config)
         env_config = self.split_arg(env_config, "duckling_dimensions")

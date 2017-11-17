@@ -26,7 +26,8 @@ if typing.TYPE_CHECKING:
 
 
 def create_argparser():
-    parser = argparse.ArgumentParser(description='train a custom language parser')
+    parser = argparse.ArgumentParser(
+            description='train a custom language parser')
 
     parser.add_argument('-p', '--pipeline', default=None,
                         help="Pipeline to use for the message processing.")
@@ -40,13 +41,17 @@ def create_argparser():
                         help="Model and data language")
     parser.add_argument('-t', '--num_threads', default=None, type=int,
                         help="Number of threads to use during model training")
+    parser.add_argument('--fixed_model_name',
+                        help="If present, a model will always be persisted "
+                             "in the specified directory instead of creating "
+                             "a folder like 'model_20171020-160213'")
     parser.add_argument('-m', '--mitie_file', default=None,
                         help='File with mitie total_word_feature_extractor')
     return parser
 
 
 class TrainingException(Exception):
-    """Exception wrapping all lower level exception that may happen during the training of a specific project.
+    """Exception wrapping lower level exceptions that may happen while training
 
       Attributes:
           failed_target_project -- name of the failed project
@@ -64,14 +69,13 @@ class TrainingException(Exception):
 
 def create_persistor(config):
     # type: (RasaNLUConfig) -> Optional[Persistor]
-    """Create a remote persistor to store the model if the configuration requests it."""
+    """Create a remote persistor to store the model if configured."""
 
-    persistor = None
-    if "bucket_name" in config:
+    if config.get("storage") is not None:
         from rasa_nlu.persistor import get_persistor
-        persistor = get_persistor(config)
-
-    return persistor
+        return get_persistor(config)
+    else:
+        return None
 
 
 def init():  # pragma: no cover
@@ -86,26 +90,31 @@ def init():  # pragma: no cover
 
 def do_train_in_worker(config):
     # type: (RasaNLUConfig) -> Text
-    """Loads the trainer and the data and runs the training of the specified model in a subprocess."""
+    """Loads the trainer and the data and runs the training in a worker."""
 
     try:
         _, _, persisted_path = do_train(config)
         return persisted_path
     except Exception as e:
-        raise TrainingException(config.get("name"), e)
+        raise TrainingException(config.get("project"), e)
 
 
-def do_train(config, component_builder=None):
-    # type: (RasaNLUConfig, Optional[ComponentBuilder]) -> Tuple[Trainer, Interpreter, Text]
-    """Loads the trainer and the data and runs the training of the specified model."""
+def do_train(config,  # type: RasaNLUConfig
+             component_builder=None  # type: Optional[ComponentBuilder]
+             ):
+    # type: (...) -> Tuple[Trainer, Interpreter, Text]
+    """Loads the trainer and the data and runs the training of the model."""
 
     # Ensure we are training a model that we can save in the end
-    # WARN: there is still a race condition if a model with the same name is trained in another subprocess
+    # WARN: there is still a race condition if a model with the same name is
+    # trained in another subprocess
     trainer = Trainer(config, component_builder)
     persistor = create_persistor(config)
-    training_data = load_data(config['data'])
+    training_data = load_data(config['data'], config['language'])
     interpreter = trainer.train(training_data)
-    persisted_path = trainer.persist(config['path'], persistor, project_name=config['name'])
+    persisted_path = trainer.persist(config['path'], persistor,
+                                     config['project'],
+                                     config['fixed_model_name'])
     return trainer, interpreter, persisted_path
 
 
